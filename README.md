@@ -80,6 +80,20 @@ process.on('message', (message) => {
 * workerOnline
 * jobFinish
 
+## Debug child process with VSCode
+```js
+{
+    "version": "0.2.0",
+    "configurations": [{
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Program",
+        "autoAttachChildProcesses": true,
+        "cwd": "${workspaceFolder}/test",
+        "program": "${workspaceFolder}/test/master.js"
+    }]
+}
+```
 
 ## CHANGELOG
 
