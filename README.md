@@ -47,7 +47,7 @@ process.on('message', (message) => {
     }
     if (message.type === "workerStart") {
        //workerOption
-        console.log( message.data);
+        console.log(message.data);
         //trigger online event
         process.send({
             type: "workerOnline"
