@@ -98,5 +98,5 @@ process.on('message', (message) => {
 
 ## CHANGELOG
 
-+ v1.0.1
-  - init
++ v1.0.2
+  - fix min mem
