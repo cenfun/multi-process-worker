@@ -1,5 +1,6 @@
 
 # Multi Process Worker
+![multi-process-worker.png](test/multi-process-worker.png)
 
 ## Install 
 ```sh

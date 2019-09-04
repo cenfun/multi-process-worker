@@ -24,7 +24,7 @@ const output = (option, msg, color) => {
 
 const toGB = (num) => {
     let m = num / 1024 / 1024 / 1024;
-    let str = m.toFixed(2) + " GB";
+    let str = m.toFixed(1) + " GB";
     return str;
 };
 
@@ -420,8 +420,6 @@ const getDefaultOption = () => {
         workerOption: {},
 
         //other option
-        //100M
-        workerMinMem: 100 * 1024 * 1024,
 
         //TODO 30Mins
         jobTimeout: 30 * 60 * 1000,
@@ -491,11 +489,11 @@ const initOption = (option) => {
 
     } else {
 
-        output(option, "initialize workers by the capacity of CPUs/freemem");
+        output(option, "initialize workerLength by the capacity of CPUs");
 
         const totalCPUs = os.cpus().length;
         rows.push({
-            name: "Total CPUs",
+            name: "CPU Cores",
             value: totalCPUs
         });
 
@@ -513,19 +511,8 @@ const initOption = (option) => {
             value: freeMemStr
         });
 
-        //free mem 1G a worker
-        const minMem = option.workerMinMem;
-        const minMemStr = toGB(minMem);
-        rows.push({
-            name: "Worker MinMemory",
-            value: minMemStr
-        });
-
-        const freeNum = Math.floor(freeMem / minMem);
-
         workerLength = totalCPUs;
         workerLength = Math.min(workerLength, option.jobLength);
-        workerLength = Math.min(workerLength, freeNum);
         workerLength = Math.max(workerLength, 1);
 
     }
