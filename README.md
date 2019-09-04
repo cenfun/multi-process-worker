@@ -36,7 +36,7 @@ const option = {
         }
     }
 };
-MPW(option);
+const code = await MPW(option);
 ```
 
 ```js
