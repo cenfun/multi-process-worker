@@ -4,7 +4,8 @@ const option = {
     workerEntry: 'worker.js',
     workerLength: 2,
     jobList: [{
-        name: "job1"
+        name: "job1",
+        jobTimeout: 5000
     }, {
         name: "job2"
     }, {
@@ -12,6 +13,7 @@ const option = {
     }, {
         name: "job3"
     }],
+    jobTimeout: 10 * 1000,
     failFast: false,
     workerOption: {
         property: "value"
@@ -24,6 +26,7 @@ const option = {
         if (option.code !== 0) {
             console.log(option.name + ': jobs stopped with error: ' + option.code);
         }
+        process.exit(option.code);
     }
 };
 MPW(option);

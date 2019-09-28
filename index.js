@@ -110,6 +110,15 @@ const sendJob = (option) => {
     job.workerId = item.workerId;
 
     item.workingJob = job;
+
+    //job timeout
+    let jobTimeout = job.jobTimeout || option.jobTimeout;
+    item.timeout_job = setTimeout(() => {
+        output(option, jobTimeout + "ms timeout to finish job: " + job.name, "red");
+        option.code = 1;
+        close(option);
+    }, jobTimeout);
+
     item.worker.send({
         type: "jobStart",
         data: job
@@ -259,6 +268,8 @@ const jobFinishHandler = (option, message) => {
         output(option, "invalid job workerId " + workerId, "red");
         return;
     }
+
+    clearTimeout(item.timeout_job);
 
     //check job on master
     let job = item.workingJob;
@@ -421,7 +432,7 @@ const getDefaultOption = () => {
 
         //other option
 
-        //TODO 30Mins
+        //30Mins
         jobTimeout: 30 * 60 * 1000,
 
         //15s
