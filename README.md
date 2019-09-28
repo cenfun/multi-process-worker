@@ -101,6 +101,9 @@ process.on('message', (message) => {
 
 ## CHANGELOG
 
++ v1.0.4
+  - fix jobTimeout
+
 + v1.0.3
   - add jobTimeout
 
