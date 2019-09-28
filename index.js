@@ -32,6 +32,10 @@ const toGB = (num) => {
 
 const killWorkerItem = (option, item) => {
     item.workingJob = null;
+    if (item.timeout_job) {
+        clearTimeout(item.timeout_job);
+        item.timeout_job = null;
+    }
     if (item.worker) {
         item.worker.removeAllListeners();
         item.worker.kill();
@@ -112,6 +116,9 @@ const sendJob = (option) => {
     item.workingJob = job;
 
     //job timeout
+    if (item.timeout_job) {
+        clearTimeout(item.timeout_job);
+    }
     let jobTimeout = job.jobTimeout || option.jobTimeout;
     item.timeout_job = setTimeout(() => {
         output(option, jobTimeout + "ms timeout to finish job: " + job.name, "red");
@@ -270,6 +277,7 @@ const jobFinishHandler = (option, message) => {
     }
 
     clearTimeout(item.timeout_job);
+    item.timeout_job = null;
 
     //check job on master
     let job = item.workingJob;
