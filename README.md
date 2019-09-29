@@ -101,6 +101,9 @@ process.on('message', (message) => {
 
 ## CHANGELOG
 
++ v1.0.5
+  - logCost support worker level only
+
 + v1.0.4
   - fix jobTimeout
 
