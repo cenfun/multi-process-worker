@@ -218,7 +218,7 @@ const logCost = (option) => {
         }
     }];
 
-    if (option.failFast) {
+    if (option.failFast && option.logCost !== "worker") {
         columns.push({
             id: "code",
             name: "Code",
@@ -232,6 +232,16 @@ const logCost = (option) => {
         if (!item) {
             continue;
         }
+        let workerRow = {
+            name: "worker " + item.workerId,
+            duration: item.duration,
+            code: ""
+        };
+        rows.push(workerRow);
+        if (option.logCost === "worker") {
+            continue;
+        }
+
         let subs = [];
         item.jobIdList.forEach(jobId => {
             let job = getJobById(option, jobId);
@@ -243,12 +253,8 @@ const logCost = (option) => {
                 });
             }
         });
-        rows.push({
-            name: "worker " + item.workerId,
-            duration: item.duration,
-            code: "",
-            subs: subs
-        });
+        workerRow.subs = subs;
+
     }
     consoleGrid.render({
         option: {},
@@ -446,6 +452,7 @@ const getDefaultOption = () => {
         //15s
         onlineTimeout: 15 * 1000,
 
+        //true, false, worker
         logCost: true,
         debugPortOffset: 1,
 

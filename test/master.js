@@ -15,6 +15,7 @@ const option = {
     }],
     jobTimeout: 10 * 1000,
     failFast: false,
+    //logCost: "worker",
     workerOption: {
         property: "value"
     },
