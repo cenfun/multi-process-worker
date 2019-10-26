@@ -29,6 +29,7 @@ const option = {
     }],
     jobTimeout: 10 * 1000,
     failFast: false,
+    useMasterAsWorker: true,
     workerOption: {
         property: "value"
     },
