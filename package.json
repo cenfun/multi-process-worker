@@ -1,6 +1,6 @@
 {
     "name": "multi-process-worker",
-    "version": "1.0.5",
+    "version": "2.0.0",
     "description": "",
     "main": "index.js",
     "dependencies": {
@@ -10,5 +10,7 @@
         "type": "git",
         "url": "https://github.com/cenfun/multi-process-worker.git"
     },
-    "scripts": {}
+    "scripts": {
+        "test": "node ./test/master.js"
+    }
 }

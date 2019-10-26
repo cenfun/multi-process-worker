@@ -1,3 +1,5 @@
+const MPW = require("../");
+
 let workerOption;
 
 let jobHandler = async (job) => {
@@ -20,38 +22,42 @@ let jobHandler = async (job) => {
     });
 };
 
-//event send from mater
-process.on('message', (message) => {
-    if (!message) {
-        return;
-    }
 
-    //set worker option
-    if (message.type === "workerStart") {
-        workerOption = message.data;
+MPW.Worker((worker) => {
+    //event send from mater
+    worker.on('message', (message) => {
+        if (!message) {
+            return;
+        }
 
-        console.log(workerOption);
-        //trigger online event
-        process.send({
-            type: "workerOnline"
-        });
-        return;
-    }
+        //set worker option
+        if (message.type === "workerStart") {
+            workerOption = message.data;
 
-    //start job
-    if (message.type === "jobStart") {
-        var job = message.data;
-        var jobStartTime = Date.now();
-        jobHandler(job).then((exitCode) => {
-            job.code = exitCode;
-            var cost = (Date.now() - jobStartTime).toLocaleString();
-            console.log("finish job and cost " + cost + "ms");
-            //finish job
-            process.send({
-                type: "jobFinish",
-                data: job
+            console.log(workerOption);
+            //trigger online event
+            worker.send({
+                type: "workerOnline"
             });
-        });
-    }
+            return;
+        }
 
+        //start job
+        if (message.type === "jobStart") {
+            var job = message.data;
+            var jobStartTime = Date.now();
+            jobHandler(job).then((exitCode) => {
+                job.code = exitCode;
+                var cost = (Date.now() - jobStartTime).toLocaleString();
+                console.log("finish job and cost " + cost + "ms");
+                //finish job
+                worker.send({
+                    type: "jobFinish",
+                    data: job
+                });
+            });
+            return;
+        }
+
+    });
 });

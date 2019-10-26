@@ -1,5 +1,7 @@
 const os = require("os");
+const EventEmitter = require('events');
 const child_process = require('child_process');
+
 const ConsoleGrid = require("console-grid");
 //'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'
 const CGS = ConsoleGrid.Style;
@@ -351,10 +353,62 @@ const jobFinishHandler = (option, message) => {
 };
 
 //=================================================================================
+class MasterWorker extends EventEmitter {
+
+    constructor(workerEntry) {
+        super();
+        if (global._masterWorker) {
+            global._masterWorker.kill();
+        }
+        global._masterWorker = this;
+        require(workerEntry);
+    }
+
+    send(data) {
+        this.emit("message", data);
+    }
+
+    kill() {
+        global._masterWorker = null;
+    }
+}
+
+//=================================================================================
+
+const workerInitEvents = (option, workerId, worker) => {
+    //from worker send
+    worker.on('message', (message) => {
+        if (message.type === "workerOnline") {
+            workerOnlineHandler(option, workerId, worker);
+            return;
+        }
+        if (message.type === "jobFinish") {
+            jobFinishHandler(option, message);
+            return;
+        }
+    });
+};
+
+const workerSendStart = (option, workerId, worker) => {
+    //require workerId
+    let workerOption = Object.assign({}, option.workerOption, {
+        workerId: workerId
+    });
+
+    worker.send({
+        type: "workerStart",
+        data: workerOption
+    });
+};
+
+const createMasterWorker = (option, workerId) => {
+    let worker = new MasterWorker(option.workerEntry);
+    workerInitEvents(option, workerId, worker);
+    workerSendStart(option, workerId, worker);
+};
 
 const getExecArgv = (option) => {
     //console.log("master", process.execArgv, process.debugPort);
-
     //https://github.com/nodejs/node/blob/master/lib/internal/cluster/master.js
     const [minPort, maxPort] = [1024, 65535];
     const debugArgRegex = /--inspect(?:-brk|-port)?|--debug-port/;
@@ -366,61 +420,40 @@ const getExecArgv = (option) => {
         }
         option.debugPortOffset += 1;
         execArgv.push('--inspect-port=' + inspectPort);
-
         //console.log("execArgv", execArgv);
         return execArgv;
     }
-
 };
 
-const createWorker = async (option, workerId) => {
-
+const createChildWorker = (option, workerId) => {
     const options = {};
     const execArgv = getExecArgv(option);
     if (execArgv) {
         options.execArgv = execArgv;
     }
-
     let worker = child_process.fork(option.workerEntry, options);
-
-    //from worker send
-    worker.on('message', (message) => {
-        if (message.type === "workerOnline") {
-            workerOnlineHandler(option, workerId, worker);
-            return;
-        }
-        if (message.type === "jobFinish") {
-            jobFinishHandler(option, message);
-        }
-    });
-
-    //require workerId
-    let workerOption = Object.assign({}, option.workerOption, {
-        workerId: workerId
-    });
-
-    worker.send({
-        type: "workerStart",
-        data: workerOption
-    });
-
+    workerInitEvents(option, workerId, worker);
+    workerSendStart(option, workerId, worker);
 };
-
 
 const startWorkers = async (option) => {
 
-    output(option, "try to create " + option.workerLength + " workers ...");
     option.time_start = Date.now();
     option.workers = {};
 
-    for (let i = 0; i < option.workerLength; i++) {
-        createWorker(option, i + 1);
+    if (option.useMasterAsWorker && option.workerLength < 2) {
+        output(option, "use master process as worker 1");
+        createMasterWorker(option, 1);
+    } else {
+        output(option, "try to create " + option.workerLength + " workers ...");
+        for (let i = 0; i < option.workerLength; i++) {
+            createChildWorker(option, i + 1);
+        }
+        //timeout for online checking
+        option.timeout_online = setTimeout(() => {
+            workerOnlineTimeoutHandler(option);
+        }, option.onlineTimeout);
     }
-
-    //timeout for online checking
-    option.timeout_online = setTimeout(() => {
-        workerOnlineTimeoutHandler(option);
-    }, option.onlineTimeout);
 
     return new Promise((resolve) => {
         option.resolve = resolve;
@@ -455,6 +488,9 @@ const getDefaultOption = () => {
         //true, false, worker
         logCost: true,
         debugPortOffset: 1,
+
+        //use master process as worker is only one job
+        useMasterAsWorker: true,
 
         //events
         onStart: async (option) => {},
@@ -575,7 +611,7 @@ const cleanOption = (option) => {
     //console.log(option);
 };
 
-const MPW = async (option) => {
+const Master = async (option) => {
 
     option = initOption(option);
     if (!option) {
@@ -595,4 +631,20 @@ const MPW = async (option) => {
     return option.code;
 };
 
-module.exports = MPW;
+//==============================================================================================================
+
+const Worker = (callback) => {
+    if (global._masterWorker) {
+        callback(global._masterWorker);
+        return;
+    }
+    callback(process);
+};
+
+
+//==============================================================================================================
+
+module.exports = {
+    Master,
+    Worker
+};
