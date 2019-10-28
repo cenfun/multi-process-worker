@@ -106,8 +106,8 @@ npm run test
 
 ## CHANGELOG
 
-+ v2.0.0
-  - (API breaking change) do not create child process if only one worker required 
++ v2.0.1
+  - (API breaking change) do not create child process if only one worker required, replace with workerHandler
 
 + v1.0.5
   - logCost support worker level only
