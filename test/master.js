@@ -1,9 +1,11 @@
 const MPW = require("../");
+const workerHandler = require("./handler.js");
 
 const testMultipleJobs = async () => {
     const option = {
         name: "MPW",
         workerEntry: __dirname + '/worker.js',
+        workerHandler: workerHandler,
         workerLength: 2,
         jobList: [{
             name: "job1",
@@ -24,21 +26,27 @@ const testMultipleJobs = async () => {
         onStart: async (option) => {
             console.log('onStart');
         },
+        onJobStart: async (job) => {
+            console.log('start ' + job.name);
+        },
+        onJobFinish: async (job) => {
+            console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
+        },
         onFinish: async (option) => {
             console.log('onFinish');
             if (option.code !== 0) {
                 console.log(option.name + ': jobs stopped with error: ' + option.code);
             }
-            //process.exit(option.code);
         }
     };
-    await MPW.Master(option);
+    await MPW(option);
 };
 
 const testSingleJob = async () => {
     const option = {
         name: "MPW",
         workerEntry: __dirname + '/worker.js',
+        workerHandler: workerHandler,
         jobList: [{
             name: "job1",
             jobTimeout: 5000
@@ -46,15 +54,20 @@ const testSingleJob = async () => {
         onStart: async (option) => {
             console.log('onStart');
         },
+        onJobStart: async (job) => {
+            console.log('start ' + job.name);
+        },
+        onJobFinish: async (job) => {
+            console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
+        },
         onFinish: async (option) => {
             console.log('onFinish');
             if (option.code !== 0) {
                 console.log(option.name + ': jobs stopped with error: ' + option.code);
             }
-            //process.exit(option.code);
         }
     };
-    await MPW.Master(option);
+    await MPW(option);
 };
 
 const test = async () => {

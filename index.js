@@ -95,7 +95,7 @@ const getFreeItem = (option) => {
     return null;
 };
 
-const sendJob = (option) => {
+const sendJob = async (option) => {
 
     //no job
     if (!option.jobQueue.length) {
@@ -114,6 +114,7 @@ const sendJob = (option) => {
     let job = option.jobQueue.shift();
     job.time_start = Date.now();
     job.workerId = item.workerId;
+    await option.onJobStart(job, option);
 
     item.workingJob = job;
 
@@ -267,7 +268,7 @@ const logCost = (option) => {
 };
 
 //job finish handler
-const jobFinishHandler = (option, message) => {
+const jobFinishHandler = async (option, message) => {
 
     //check job from worker
     let workerJob = message.data;
@@ -305,6 +306,8 @@ const jobFinishHandler = (option, message) => {
     job.jobId = jobId;
     job.time_end = Date.now();
     job.duration = job.time_end - job.time_start;
+
+    await option.onJobFinish(job, option);
 
     option.jobFinished += 1;
 
@@ -355,25 +358,35 @@ const jobFinishHandler = (option, message) => {
 //=================================================================================
 class MasterWorker extends EventEmitter {
 
-    constructor(workerEntry) {
+    constructor(workerHandler) {
         super();
-        if (global._masterWorker) {
-            global._masterWorker.kill();
-        }
-        global._masterWorker = this;
-        require(workerEntry);
+        this.on('message', async (message) => {
+            if (message.type === "workerStart") {
+                this.send({
+                    type: "workerOnline"
+                });
+                return;
+            }
+            if (message.type === "jobStart") {
+                let job = message.data;
+                job.code = await workerHandler(job);
+                this.send({
+                    type: "jobFinish",
+                    data: job
+                });
+                return;
+            }
+        });
     }
 
     send(data) {
         this.emit("message", data);
     }
 
-    kill() {
-        global._masterWorker = null;
-    }
+    kill() {}
 }
 
-//=================================================================================
+//==================================================================================================
 
 const workerInitEvents = (option, workerId, worker) => {
     //from worker send
@@ -401,11 +414,15 @@ const workerSendStart = (option, workerId, worker) => {
     });
 };
 
+//==================================================================================================
+
 const createMasterWorker = (option, workerId) => {
-    let worker = new MasterWorker(option.workerEntry);
+    let worker = new MasterWorker(option.workerHandler);
     workerInitEvents(option, workerId, worker);
     workerSendStart(option, workerId, worker);
 };
+
+//==================================================================================================
 
 const getExecArgv = (option) => {
     //console.log("master", process.execArgv, process.debugPort);
@@ -436,12 +453,14 @@ const createChildWorker = (option, workerId) => {
     workerSendStart(option, workerId, worker);
 };
 
+//==================================================================================================
+
 const startWorkers = async (option) => {
 
     option.time_start = Date.now();
     option.workers = {};
 
-    if (option.useMasterAsWorker && option.workerLength < 2) {
+    if (option.workerHandler && option.workerLength < 2) {
         output(option, "use master process as worker 1");
         createMasterWorker(option, 1);
     } else {
@@ -468,6 +487,7 @@ const getDefaultOption = () => {
         name: "MPW",
 
         workerEntry: '',
+        workerHandler: null,
 
         jobList: [],
 
@@ -489,11 +509,10 @@ const getDefaultOption = () => {
         logCost: true,
         debugPortOffset: 1,
 
-        //use master process as worker is only one job
-        useMasterAsWorker: true,
-
         //events
         onStart: async (option) => {},
+        onJobStart: async (job, option) => {},
+        onJobFinish: async (job, option) => {},
         onFinish: async (option) => {},
 
         //return code
@@ -611,7 +630,7 @@ const cleanOption = (option) => {
     //console.log(option);
 };
 
-const Master = async (option) => {
+const MPW = async (option) => {
 
     option = initOption(option);
     if (!option) {
@@ -631,20 +650,4 @@ const Master = async (option) => {
     return option.code;
 };
 
-//==============================================================================================================
-
-const Worker = (callback) => {
-    if (global._masterWorker) {
-        callback(global._masterWorker);
-        return;
-    }
-    callback(process);
-};
-
-
-//==============================================================================================================
-
-module.exports = {
-    Master,
-    Worker
-};
+module.exports = MPW;

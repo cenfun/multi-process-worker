@@ -16,6 +16,7 @@ const MPW = require("multi-process-worker");
 const option = {
     name: "MPW",
     workerEntry: 'worker.js',
+    workerHandler: null,
     workerLength: 2,
     jobList: [{
         name: "job1",
@@ -29,12 +30,17 @@ const option = {
     }],
     jobTimeout: 10 * 1000,
     failFast: false,
-    useMasterAsWorker: true,
     workerOption: {
         property: "value"
     },
     onStart: async (option) => {
         console.log('onStart');
+    },
+    onJobStart: async (job) => {
+        console.log('start ' + job.name);
+    },
+    onJobFinish: async (job) => {
+        console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
     },
     onFinish: async (option) => {
         console.log('onFinish');
@@ -44,45 +50,29 @@ const option = {
         process.exit(option.code);
     }
 };
-const code = await MPW.Master(option);
+const code = await MPW(option);
 ```
 
 ```js
 //worker.js for child process
-const MPW = require("multi-process-worker");
-MPW.Worker((worker) => {
-    //event send from mater
-    worker.on('message', (message) => {
-        if (!message) {
-            return;
-        }
-        //set worker option
-        if (message.type === "workerStart") {
-            workerOption = message.data;
-            console.log(workerOption);
-            //trigger online event
-            worker.send({
-                type: "workerOnline"
-            });
-            return;
-        }
-        //start job
-        if (message.type === "jobStart") {
-            var job = message.data;
-            var jobStartTime = Date.now();
-            jobHandler(job).then((exitCode) => {
-                job.code = exitCode;
-                var cost = (Date.now() - jobStartTime).toLocaleString();
-                console.log("finish job and cost " + cost + "ms");
-                //finish job
-                worker.send({
-                    type: "jobFinish",
-                    data: job
-                });
-            });
-        }
-
-    });
+process.on('message', async (message) => {
+    if (message.type === "workerStart") {
+        let workerOption = message.data;
+        console.log(workerOption);
+        process.send({
+            type: "workerOnline"
+        });
+        return;
+    }
+    if (message.type === "jobStart") {
+        var job = message.data;
+        job.code = await workerHandler(job);
+        process.send({
+            type: "jobFinish",
+            data: job
+        });
+        return;
+    }
 });
 ```
 
