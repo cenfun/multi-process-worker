@@ -157,7 +157,7 @@ const startJob = (option) => {
 
 const workerOnlineHandler = (option, workerId, worker) => {
     //keep worker to list
-    let workerInfo = {
+    let item = {
         workerId: workerId,
         time_start: option.time_start,
         time_end: Date.now(),
@@ -165,8 +165,9 @@ const workerOnlineHandler = (option, workerId, worker) => {
         workingJob: null,
         worker: worker
     };
-    workerInfo.duration = workerInfo.time_end - workerInfo.time_start;
-    option.workers[workerId] = workerInfo;
+    item.duration = item.time_end - item.time_start;
+    option.workers[workerId] = item;
+
     output(option, "worker " + workerId + " is " + CGS.green("online"));
     let onlineLength = Object.keys(option.workers).length;
     if (onlineLength >= option.workerLength) {
@@ -460,7 +461,6 @@ const createChildWorker = (option, workerId) => {
 
 const startWorkers = async (option) => {
 
-    option.time_start = Date.now();
     option.workers = {};
 
     if (option.workerHandler && option.workerLength < 2) {
@@ -527,6 +527,7 @@ const getDefaultOption = () => {
 const initOption = (option) => {
 
     option = Object.assign(getDefaultOption(), option);
+    option.time_start = Date.now();
 
     //check required option
     if (!option.workerEntry || typeof(option.workerEntry) !== "string") {
