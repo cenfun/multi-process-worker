@@ -157,13 +157,16 @@ const startJob = (option) => {
 
 const workerOnlineHandler = (option, workerId, worker) => {
     //keep worker to list
-    option.workers[workerId] = {
+    let workerInfo = {
         workerId: workerId,
-        time_start: Date.now(),
+        time_start: option.time_start,
+        time_end: Date.now(),
         jobIdList: [],
         workingJob: null,
         worker: worker
     };
+    workerInfo.duration = workerInfo.time_end - workerInfo.time_start;
+    option.workers[workerId] = workerInfo;
     output(option, "worker " + workerId + " is " + CGS.green("online"));
     let onlineLength = Object.keys(option.workers).length;
     if (onlineLength >= option.workerLength) {

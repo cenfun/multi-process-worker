@@ -106,6 +106,9 @@ npm run test
 
 ## CHANGELOG
 
++ v2.0.2
+  - fixed worker duration if nothing done
+
 + v2.0.1
   - (API breaking change) do not create child process if only one worker required, replace with workerHandler
 
