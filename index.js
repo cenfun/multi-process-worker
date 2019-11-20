@@ -124,7 +124,8 @@ const sendJob = async (option) => {
     }
     let jobTimeout = job.jobTimeout || option.jobTimeout;
     item.timeout_job = setTimeout(() => {
-        output(option, jobTimeout + "ms timeout to finish job: " + job.name, "red");
+        let jobInfo = "[worker" + job.workerId + "] [job" + job.jobId + "] " + job.name;
+        output(option, jobTimeout + "ms timeout: " + jobInfo, "red");
         option.code = 1;
         close(option);
     }, jobTimeout);
@@ -306,7 +307,7 @@ const jobFinishHandler = async (option, message) => {
     //merge worker job back to master job
     job = Object.assign(job, workerJob);
 
-    //rquired property, do NOT merge by worker job info
+    //required property, do NOT merge by worker job info
     job.jobId = jobId;
     job.time_end = Date.now();
     job.duration = job.time_end - job.time_start;
