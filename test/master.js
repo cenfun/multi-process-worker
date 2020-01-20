@@ -6,7 +6,7 @@ const testMultipleJobs = async () => {
         name: "MPW",
         workerEntry: __dirname + '/worker.js',
         workerHandler: workerHandler,
-        workerLength: 2,
+        //workerLength: 2,
         jobList: [{
             name: "job1",
             jobTimeout: 5000
@@ -14,6 +14,34 @@ const testMultipleJobs = async () => {
             name: "job2"
         }, {
             name: "error-job"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
+        }, {
+            name: "job3"
         }, {
             name: "job3"
         }],

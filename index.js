@@ -24,12 +24,86 @@ const output = (option, msg, color) => {
     console.log(str);
 };
 
-const toGB = (num) => {
-    let m = num / 1024 / 1024 / 1024;
-    let str = m.toFixed(1) + " GB";
-    return str;
-};
+const Util = {
 
+    zero: function(s, l = 2) {
+        s = s + "";
+        return s.padStart(l, "0");
+    },
+
+    toNum: function(num, toInt) {
+        if (typeof(num) !== "number") {
+            num = parseFloat(num);
+        }
+        if (isNaN(num)) {
+            num = 0;
+        }
+        if (toInt) {
+            num = Math.round(num);
+        }
+        return num;
+    },
+
+    BF: function(v, digits = 1, base = 1024) {
+        v = Util.toNum(v, true);
+        if (v === 0) {
+            return "0B";
+        }
+        let prefix = "";
+        if (v < 0) {
+            v = Math.abs(v);
+            prefix = "-";
+        }
+        const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        for (let i = 0, l = units.length; i < l; i++) {
+            let min = Math.pow(base, i);
+            let max = Math.pow(base, i + 1);
+            if (v > min && v < max) {
+                let unit = units[i];
+                v = prefix + (v / min).toFixed(digits) + unit;
+                break;
+            }
+        }
+        return v;
+    },
+
+    //time
+    TF: function(v, unit, digits = 1) {
+        v = Util.toNum(v, true);
+        if (unit) {
+            if (unit === "s") {
+                v = (v / 1000).toFixed(digits);
+            } else if (unit === "m") {
+                v = (v / 1000 / 60).toFixed(digits);
+            } else if (unit === "h") {
+                v = (v / 1000 / 60 / 60).toFixed(digits);
+            }
+            return Util.NF(v) + unit;
+        }
+        const s = v / 1000;
+        const hours = Math.floor(s / 60 / 60);
+        const minutes = Math.floor((s - (hours * 60 * 60)) / 60);
+        const seconds = Math.round(s - (hours * 60 * 60) - (minutes * 60));
+        const time = hours + ':' + Util.zero(minutes) + ':' + Util.zero(seconds);
+        return time;
+    },
+
+    //number
+    NF: function(v) {
+        v = Util.toNum(v);
+        return v.toLocaleString();
+    },
+
+    //duration
+    DF: function(v, maxV) {
+        maxV = maxV || v;
+        if (maxV > 60 * 1000) {
+            return Util.TF(v);
+        }
+        return Util.TF(v, "ms");
+    }
+
+};
 //=================================================================================
 
 const killWorkerItem = (option, item) => {
@@ -174,7 +248,7 @@ const workerOnlineHandler = (option, workerId, worker) => {
     if (onlineLength >= option.workerLength) {
         clearTimeout(option.timeout_online);
         let cost = (Date.now() - option.time_start).toLocaleString();
-        output(option, "all workers are online (" + option.workerLength + ") and cost " + cost + "ms");
+        output(option, "all workers are online (" + option.workerLength + ") and cost " + Util.DF(cost));
     }
     startJob(option);
 };
@@ -213,6 +287,8 @@ const logCost = (option) => {
         return;
     }
 
+    let maxDuration = 0;
+
     let columns = [{
         id: "name",
         name: "Name: " + option.name,
@@ -222,7 +298,7 @@ const logCost = (option) => {
         name: "Duration",
         align: "right",
         formatter: function(v) {
-            return v.toLocaleString() + " ms";
+            return Util.DF(v, maxDuration);
         }
     }];
 
@@ -245,6 +321,7 @@ const logCost = (option) => {
             duration: item.duration,
             code: ""
         };
+        maxDuration = Math.max(maxDuration, item.duration);
         rows.push(workerRow);
         if (option.logCost === "worker") {
             continue;
@@ -261,6 +338,13 @@ const logCost = (option) => {
                 });
             }
         });
+        var sl = subs.length;
+        if (sl > 6) {
+            subs.length = 5;
+            subs.push({
+                name: "(...and " + (sl - 5) + " more)"
+            });
+        }
         workerRow.subs = subs;
 
     }
@@ -327,7 +411,7 @@ const jobFinishHandler = async (option, message) => {
         if (option.failFast) {
             //finish fast handler
             let cost = (Date.now() - option.time_start).toLocaleString();
-            output(option, "finish jobs (" + option.jobFinished + "/" + option.jobLength + ") and cost " + cost + "ms");
+            output(option, "finish jobs (" + option.jobFinished + "/" + option.jobLength + ") and cost " + Util.DF(cost));
 
             output(option, "failFast: " + option.failFast);
             output(option, "job " + job.jobId + " failed and all worker will be closed ... ");
@@ -344,7 +428,7 @@ const jobFinishHandler = async (option, message) => {
         //finish all handler
 
         let cost = (Date.now() - option.time_start).toLocaleString();
-        output(option, "finish all jobs (" + option.jobLength + ") and cost " + cost + "ms", "green");
+        output(option, "finish all jobs (" + option.jobLength + ") and cost " + Util.DF(cost), "green");
 
         option.code = option.jobFailed;
         close(option);
@@ -583,18 +667,18 @@ const initOption = (option) => {
             value: totalCPUs
         });
 
-        const totalMem = os.totalmem();
-        const totalMemStr = toGB(totalMem);
-        rows.push({
-            name: "Total Memory",
-            value: totalMemStr
-        });
-
         const freeMem = os.freemem();
-        const freeMemStr = toGB(freeMem);
+        const freeMemStr = Util.BF(freeMem);
         rows.push({
             name: "Free Memory",
             value: freeMemStr
+        });
+
+        const totalMem = os.totalmem();
+        const totalMemStr = Util.BF(totalMem);
+        rows.push({
+            name: "Total Memory",
+            value: totalMemStr
         });
 
         workerLength = totalCPUs;

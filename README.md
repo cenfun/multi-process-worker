@@ -106,6 +106,9 @@ npm run test
 
 ## CHANGELOG
 
++ v2.0.3
+  - fixed output log
+
 + v2.0.2
   - fixed worker duration if nothing done
 
