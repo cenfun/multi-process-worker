@@ -1,6 +1,6 @@
 const os = require("os");
-const EventEmitter = require('events');
-const child_process = require('child_process');
+const EventEmitter = require("events");
+const child_process = require("child_process");
 
 const ConsoleGrid = require("console-grid");
 //'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'
@@ -13,21 +13,21 @@ const output = (option, msg, color) => {
         return;
     }
     const name = option.name || "MPW";
-    const prefix = CGS.magenta("[" + name + "]");
+    const prefix = CGS.magenta(`[${name}]`);
     if (color) {
-        let fn = CGS[color];
+        const fn = CGS[color];
         if (typeof(fn) === "function") {
             msg = fn(msg);
         }
     }
-    const str = prefix + " " + msg;
+    const str = `${prefix} ${msg}`;
     console.log(str);
 };
 
 const Util = {
 
     zero: function(s, l = 2) {
-        s = s + "";
+        s = `${s}`;
         return s.padStart(l, "0");
     },
 
@@ -54,12 +54,12 @@ const Util = {
             v = Math.abs(v);
             prefix = "-";
         }
-        const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
         for (let i = 0, l = units.length; i < l; i++) {
-            let min = Math.pow(base, i);
-            let max = Math.pow(base, i + 1);
+            const min = Math.pow(base, i);
+            const max = Math.pow(base, i + 1);
             if (v > min && v < max) {
-                let unit = units[i];
+                const unit = units[i];
                 v = prefix + (v / min).toFixed(digits) + unit;
                 break;
             }
@@ -84,7 +84,7 @@ const Util = {
         const hours = Math.floor(s / 60 / 60);
         const minutes = Math.floor((s - (hours * 60 * 60)) / 60);
         const seconds = Math.round(s - (hours * 60 * 60) - (minutes * 60));
-        const time = hours + ':' + Util.zero(minutes) + ':' + Util.zero(seconds);
+        const time = `${hours}:${Util.zero(minutes)}:${Util.zero(seconds)}`;
         return time;
     },
 
@@ -106,6 +106,15 @@ const Util = {
 };
 //=================================================================================
 
+const killProcess = (worker) => {
+    if (worker.kill()) {
+        return;
+    }
+    //'SIGKILL' cannot have a listener installed
+    //it will unconditionally terminate Node.js on all platforms.
+    worker.kill("SIGKILL");
+};
+
 const killWorkerItem = (option, item) => {
     item.workingJob = null;
     if (item.timeout_job) {
@@ -114,9 +123,9 @@ const killWorkerItem = (option, item) => {
     }
     if (item.worker) {
         item.worker.removeAllListeners();
-        item.worker.kill();
+        killProcess(item.worker);
         item.worker = null;
-        output(option, "worker " + item.workerId + " was " + CGS.green("closed"));
+        output(option, `worker ${item.workerId} was ${CGS.green("closed")}`);
     }
 };
 
@@ -125,8 +134,8 @@ const close = (option) => {
     clearTimeout(option.timeout_online);
     clearTimeout(option.timeout_send);
 
-    for (let workerId in option.workers) {
-        let item = option.workers[workerId];
+    for (const workerId in option.workers) {
+        const item = option.workers[workerId];
         killWorkerItem(option, item);
     }
 
@@ -136,7 +145,7 @@ const close = (option) => {
     clearTimeout(option.timeout_kill);
     //timeout for kill workers end, sometimes failed
     option.timeout_kill = setTimeout(() => {
-        let resolve = option.resolve;
+        const resolve = option.resolve;
         delete option.resolve;
 
         option.time_end = Date.now();
@@ -148,8 +157,8 @@ const close = (option) => {
 
 //clean workers already finished after all jobs sent
 const cleanWorker = (option) => {
-    for (let workerId in option.workers) {
-        let item = option.workers[workerId];
+    for (const workerId in option.workers) {
+        const item = option.workers[workerId];
         if (item.workingJob) {
             continue;
         }
@@ -160,8 +169,8 @@ const cleanWorker = (option) => {
 //=================================================================================
 
 const getFreeItem = (option) => {
-    for (let workerId in option.workers) {
-        let item = option.workers[workerId];
+    for (const workerId in option.workers) {
+        const item = option.workers[workerId];
         if (!item.workingJob) {
             return item;
         }
@@ -178,14 +187,14 @@ const sendJob = async (option) => {
     }
 
     //not free worker
-    let item = getFreeItem(option);
+    const item = getFreeItem(option);
     if (!item) {
         //do nothing
         return;
     }
 
     //require copy job list
-    let job = option.jobQueue.shift();
+    const job = option.jobQueue.shift();
     job.time_start = Date.now();
     job.workerId = item.workerId;
     await option.onJobStart(job, option);
@@ -196,10 +205,10 @@ const sendJob = async (option) => {
     if (item.timeout_job) {
         clearTimeout(item.timeout_job);
     }
-    let jobTimeout = job.jobTimeout || option.jobTimeout;
+    const jobTimeout = job.jobTimeout || option.jobTimeout;
     item.timeout_job = setTimeout(() => {
-        let jobInfo = "[worker" + job.workerId + "] [job" + job.jobId + "] " + job.name;
-        output(option, jobTimeout + "ms timeout: " + jobInfo, "red");
+        const jobInfo = `[worker${job.workerId}] [job${job.jobId}] ${job.name}`;
+        output(option, `${jobTimeout}ms timeout: ${jobInfo}`, "red");
         option.code = 1;
         close(option);
     }, jobTimeout);
@@ -232,7 +241,7 @@ const startJob = (option) => {
 
 const workerOnlineHandler = (option, workerId, worker) => {
     //keep worker to list
-    let item = {
+    const item = {
         workerId: workerId,
         time_start: option.time_start,
         time_end: Date.now(),
@@ -243,27 +252,27 @@ const workerOnlineHandler = (option, workerId, worker) => {
     item.duration = item.time_end - item.time_start;
     option.workers[workerId] = item;
 
-    output(option, "worker " + workerId + " is " + CGS.green("online"));
-    let onlineLength = Object.keys(option.workers).length;
+    output(option, `worker ${workerId} is ${CGS.green("online")}`);
+    const onlineLength = Object.keys(option.workers).length;
     if (onlineLength >= option.workerLength) {
         clearTimeout(option.timeout_online);
-        let cost = (Date.now() - option.time_start).toLocaleString();
-        output(option, "all workers are online (" + option.workerLength + ") and cost " + Util.DF(cost));
+        const cost = (Date.now() - option.time_start).toLocaleString();
+        output(option, `all workers are online (${option.workerLength}) and cost ${Util.DF(cost)}`);
     }
     startJob(option);
 };
 
 const workerOnlineTimeoutHandler = (option) => {
-    let onlineLength = Object.keys(option.workers).length;
+    const onlineLength = Object.keys(option.workers).length;
     if (!onlineLength) {
-        output(option, option.onlineTimeout + "ms timeout to create any workers", "red");
+        output(option, `${option.onlineTimeout}ms timeout to create any workers`, "red");
         option.code = 1;
         close(option);
         return;
     }
     //parts online
-    let status = "online " + onlineLength + " / total " + option.workerLength;
-    output(option, option.onlineTimeout + "ms timeout to create workers: " + status, "yellow");
+    const status = `online ${onlineLength} / total ${option.workerLength}`;
+    output(option, `${option.onlineTimeout}ms timeout to create workers: ${status}`, "yellow");
     output(option, "The host could NOT have enough CPU/Memory capacity for running more workers quickly.");
 };
 
@@ -271,9 +280,9 @@ const workerOnlineTimeoutHandler = (option) => {
 
 const getJobById = (option, jobId) => {
     if (jobId) {
-        let list = option.jobList;
+        const list = option.jobList;
         for (let i = 0, l = list.length; i < l; i++) {
-            let job = list[i];
+            const job = list[i];
             if (job && job.jobId === jobId) {
                 return job;
             }
@@ -289,10 +298,10 @@ const logCost = (option) => {
 
     let maxDuration = 0;
 
-    let columns = [{
+    const columns = [{
         id: "name",
-        name: "Name: " + option.name,
-        maxWidth: 100,
+        name: `Name: ${option.name}`,
+        maxWidth: 100
     }, {
         id: "duration",
         name: "Duration",
@@ -308,41 +317,48 @@ const logCost = (option) => {
             name: "Code",
             align: "right"
         });
+    } else if (option.logCost === "worker") {
+        columns.push({
+            id: "jobs",
+            name: "Jobs",
+            align: "right"
+        });
     }
 
-    let rows = [];
-    for (let workerId in option.workers) {
-        let item = option.workers[workerId];
+    const rows = [];
+    for (const workerId in option.workers) {
+        const item = option.workers[workerId];
         if (!item) {
             continue;
         }
-        let workerRow = {
-            name: "worker " + item.workerId,
+        const workerRow = {
+            name: `worker ${item.workerId}`,
             duration: item.duration,
             code: ""
         };
         maxDuration = Math.max(maxDuration, item.duration);
         rows.push(workerRow);
         if (option.logCost === "worker") {
+            workerRow.jobs = item.jobIdList.length;
             continue;
         }
 
-        let subs = [];
+        const subs = [];
         item.jobIdList.forEach(jobId => {
-            let job = getJobById(option, jobId);
+            const job = getJobById(option, jobId);
             if (job) {
                 subs.push({
-                    name: "job " + jobId + " - " + job.name,
+                    name: `job ${jobId} - ${job.name}`,
                     duration: job.duration,
                     code: job.code
                 });
             }
         });
-        var sl = subs.length;
+        const sl = subs.length;
         if (sl > 6) {
             subs.length = 5;
             subs.push({
-                name: "(...and " + (sl - 5) + " more)"
+                name: `(...and ${sl - 5} more)`
             });
         }
         workerRow.subs = subs;
@@ -360,17 +376,17 @@ const logCost = (option) => {
 const jobFinishHandler = async (option, message) => {
 
     //check job from worker
-    let workerJob = message.data;
+    const workerJob = message.data;
     if (!workerJob) {
         output(option, "invalid job info sent from worker", "red");
         return;
     }
 
     //check worker
-    let workerId = workerJob.workerId;
-    let item = option.workers[workerId];
+    const workerId = workerJob.workerId;
+    const item = option.workers[workerId];
     if (!item) {
-        output(option, "invalid job workerId " + workerId, "red");
+        output(option, `invalid job workerId ${workerId}`, "red");
         return;
     }
 
@@ -381,7 +397,7 @@ const jobFinishHandler = async (option, message) => {
     let job = item.workingJob;
     item.workingJob = null;
 
-    let jobId = job.jobId;
+    const jobId = job.jobId;
 
     //keep master job id as finished job
     item.jobIdList.push(jobId);
@@ -410,11 +426,11 @@ const jobFinishHandler = async (option, message) => {
 
         if (option.failFast) {
             //finish fast handler
-            let cost = (Date.now() - option.time_start).toLocaleString();
-            output(option, "finish jobs (" + option.jobFinished + "/" + option.jobLength + ") and cost " + Util.DF(cost));
+            const cost = (Date.now() - option.time_start).toLocaleString();
+            output(option, `finish jobs (${option.jobFinished}/${option.jobLength}) and cost ${Util.DF(cost)}`);
 
-            output(option, "failFast: " + option.failFast);
-            output(option, "job " + job.jobId + " failed and all worker will be closed ... ");
+            output(option, `failFast: ${option.failFast}`);
+            output(option, `job ${job.jobId} failed and all worker will be closed ... `);
 
             //stop/close/kill all jobs
             option.code = job.code;
@@ -427,8 +443,8 @@ const jobFinishHandler = async (option, message) => {
     if (option.jobFinished >= option.jobLength) {
         //finish all handler
 
-        let cost = (Date.now() - option.time_start).toLocaleString();
-        output(option, "finish all jobs (" + option.jobLength + ") and cost " + Util.DF(cost), "green");
+        const cost = (Date.now() - option.time_start).toLocaleString();
+        output(option, `finish all jobs (${option.jobLength}) and cost ${Util.DF(cost)}`, "green");
 
         option.code = option.jobFailed;
         close(option);
@@ -449,7 +465,7 @@ class MasterWorker extends EventEmitter {
 
     constructor(workerHandler) {
         super();
-        this.on('message', async (message) => {
+        this.on("message", async (message) => {
             if (message.type === "workerStart") {
                 this.send({
                     type: "workerOnline"
@@ -457,13 +473,13 @@ class MasterWorker extends EventEmitter {
                 return;
             }
             if (message.type === "jobStart") {
-                let job = message.data;
+                const job = message.data;
                 job.code = await workerHandler(job);
                 this.send({
                     type: "jobFinish",
                     data: job
                 });
-                return;
+                
             }
         });
     }
@@ -472,28 +488,31 @@ class MasterWorker extends EventEmitter {
         this.emit("message", data);
     }
 
-    kill() {}
+    kill() {
+        this.killed = true;
+        return true;
+    }
 }
 
 //==================================================================================================
 
 const workerInitEvents = (option, workerId, worker) => {
     //from worker send
-    worker.on('message', (message) => {
+    worker.on("message", (message) => {
         if (message.type === "workerOnline") {
             workerOnlineHandler(option, workerId, worker);
             return;
         }
         if (message.type === "jobFinish") {
             jobFinishHandler(option, message);
-            return;
+            
         }
     });
 };
 
 const workerSendStart = (option, workerId, worker) => {
     //require workerId
-    let workerOption = Object.assign({}, option.workerOption, {
+    const workerOption = Object.assign({}, option.workerOption, {
         workerId: workerId
     });
 
@@ -506,7 +525,7 @@ const workerSendStart = (option, workerId, worker) => {
 //==================================================================================================
 
 const createMasterWorker = (option, workerId) => {
-    let worker = new MasterWorker(option.workerHandler);
+    const worker = new MasterWorker(option.workerHandler);
     workerInitEvents(option, workerId, worker);
     workerSendStart(option, workerId, worker);
 };
@@ -518,14 +537,14 @@ const getExecArgv = (option) => {
     //https://github.com/nodejs/node/blob/master/lib/internal/cluster/master.js
     const [minPort, maxPort] = [1024, 65535];
     const debugArgRegex = /--inspect(?:-brk|-port)?|--debug-port/;
-    let execArgv = process.execArgv.slice();
+    const execArgv = process.execArgv.slice();
     if (execArgv.some((arg) => arg.match(debugArgRegex))) {
         let inspectPort = process.debugPort + option.debugPortOffset;
         if (inspectPort > maxPort) {
             inspectPort = inspectPort - maxPort + minPort - 1;
         }
         option.debugPortOffset += 1;
-        execArgv.push('--inspect-port=' + inspectPort);
+        execArgv.push(`--inspect-port=${inspectPort}`);
         //console.log("execArgv", execArgv);
         return execArgv;
     }
@@ -537,14 +556,14 @@ const createChildWorker = (option, workerId) => {
     if (execArgv) {
         options.execArgv = execArgv;
     }
-    let worker = child_process.fork(option.workerEntry, options);
+    const worker = child_process.fork(option.workerEntry, options);
     workerInitEvents(option, workerId, worker);
     workerSendStart(option, workerId, worker);
 };
 
 //==================================================================================================
 
-const startWorkers = async (option) => {
+const startWorkers = (option) => {
 
     option.workers = {};
 
@@ -552,7 +571,7 @@ const startWorkers = async (option) => {
         output(option, "use master process as worker 1");
         createMasterWorker(option, 1);
     } else {
-        output(option, "try to create " + option.workerLength + " workers ...");
+        output(option, `try to create ${option.workerLength} workers ...`);
         for (let i = 0; i < option.workerLength; i++) {
             createChildWorker(option, i + 1);
         }
@@ -574,7 +593,7 @@ const getDefaultOption = () => {
     return {
         name: "MPW",
 
-        workerEntry: '',
+        workerEntry: "",
         workerHandler: null,
 
         jobList: [],
@@ -616,13 +635,13 @@ const initOption = (option) => {
 
     //check required option
     if (!option.workerEntry || typeof(option.workerEntry) !== "string") {
-        output(option, "require a valid workerEntry: " + option.workerEntry, "red");
+        output(option, `require a valid workerEntry: ${option.workerEntry}`, "red");
         return;
     }
-    output(option, "workerEntry: " + option.workerEntry);
+    output(option, `workerEntry: ${option.workerEntry}`);
 
     if (!option.jobList || !option.jobList.length) {
-        output(option, "require a valid jobList: " + option.jobList, "red");
+        output(option, `require a valid jobList: ${option.jobList}`, "red");
         return;
     }
 
@@ -652,7 +671,7 @@ const initOption = (option) => {
     let workerLength = option.workerLength;
 
     if (workerLength) {
-        output(option, "specified workers: " + workerLength);
+        output(option, `specified workers: ${workerLength}`);
 
         workerLength = Math.min(workerLength, option.jobLength);
         workerLength = Math.max(workerLength, 1);
@@ -711,7 +730,7 @@ const initOption = (option) => {
 
 const cleanOption = (option) => {
     //remove timeout id
-    for (let k in option) {
+    for (const k in option) {
         if (k.indexOf("timeout_") === 0) {
             delete option[k];
         }
