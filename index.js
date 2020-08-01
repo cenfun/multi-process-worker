@@ -106,26 +106,18 @@ const Util = {
 };
 //=================================================================================
 
-const killProcess = (worker) => {
-    if (worker.kill()) {
-        return;
-    }
-    //'SIGKILL' cannot have a listener installed
-    //it will unconditionally terminate Node.js on all platforms.
-    worker.kill("SIGKILL");
-};
-
 const killWorkerItem = (option, item) => {
     item.workingJob = null;
     if (item.timeout_job) {
         clearTimeout(item.timeout_job);
         item.timeout_job = null;
     }
-    if (item.worker) {
-        item.worker.removeAllListeners();
-        killProcess(item.worker);
+    const worker = item.worker;
+    if (worker) {
         item.worker = null;
-        output(option, `worker ${item.workerId} was ${CGS.green("closed")}`);
+        worker.removeAllListeners();
+        const killed = worker.kill("SIGKILL");
+        output(option, `worker ${item.workerId} was killed: ${killed}`);
     }
 };
 
