@@ -4,7 +4,7 @@ const workerHandler = require("./handler.js");
 const testMultipleJobs = async () => {
     const option = {
         name: "MPW",
-        workerEntry: __dirname + '/worker.js',
+        workerEntry: `${__dirname}/worker.js`,
         workerHandler: workerHandler,
         //workerLength: 2,
         jobList: [{
@@ -51,19 +51,19 @@ const testMultipleJobs = async () => {
         workerOption: {
             property: "value"
         },
-        onStart: async (option) => {
-            console.log('onStart');
+        onStart: (option) => {
+            console.log("onStart");
         },
-        onJobStart: async (job) => {
-            console.log('start ' + job.name);
+        onJobStart: (job) => {
+            console.log(`start ${job.name}`);
         },
-        onJobFinish: async (job) => {
-            console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
+        onJobFinish: (job) => {
+            console.log(`finish ${job.name} and cost ${job.duration.toLocaleString()}ms`);
         },
-        onFinish: async (option) => {
-            console.log('onFinish');
+        onFinish: (option) => {
+            console.log("onFinish");
             if (option.code !== 0) {
-                console.log(option.name + ': jobs stopped with error: ' + option.code);
+                console.log(`${option.name}: jobs stopped with error: ${option.code}`);
             }
         }
     };
@@ -73,25 +73,25 @@ const testMultipleJobs = async () => {
 const testSingleJob = async () => {
     const option = {
         name: "MPW",
-        workerEntry: __dirname + '/worker.js',
+        workerEntry: `${__dirname}/worker.js`,
         workerHandler: workerHandler,
         jobList: [{
             name: "job1",
             jobTimeout: 5000
         }],
-        onStart: async (option) => {
-            console.log('onStart');
+        onStart: (option) => {
+            console.log("onStart");
         },
-        onJobStart: async (job) => {
-            console.log('start ' + job.name);
+        onJobStart: (job) => {
+            console.log(`start ${job.name}`);
         },
-        onJobFinish: async (job) => {
-            console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
+        onJobFinish: (job) => {
+            console.log(`finish ${job.name} and cost ${job.duration.toLocaleString()}ms`);
         },
-        onFinish: async (option) => {
-            console.log('onFinish');
+        onFinish: (option) => {
+            console.log("onFinish");
             if (option.code !== 0) {
-                console.log(option.name + ': jobs stopped with error: ' + option.code);
+                console.log(`${option.name}: jobs stopped with error: ${option.code}`);
             }
         }
     };
