@@ -36,11 +36,12 @@ const option = {
     onStart: async (option) => {
         console.log('onStart');
     },
-    onJobStart: async (job) => {
-        console.log('start ' + job.name);
+    onJobStart: (job) => {
+        console.log(`${job.jobName}: ${job.jobId} - start ${job.name}`);
     },
-    onJobFinish: async (job) => {
-        console.log("finish " + job.name + " and cost " + job.duration.toLocaleString() + "ms");
+    onJobFinish: (job, option) => {
+        console.log(`${job.jobName}: ${job.jobId} - finish ${job.name}`, `cost ${job.duration.toLocaleString()}ms`);
+        console.log(option.stats);
     },
     onFinish: async (option) => {
         console.log('onFinish');
@@ -105,6 +106,9 @@ npm run test
 ```
 
 ## CHANGELOG
+
++ v2.0.4
+  - added stats(percent,elapsedTime,estimatedTime) when job finished
 
 + v2.0.3
   - fixed output log

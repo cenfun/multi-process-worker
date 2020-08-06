@@ -55,10 +55,11 @@ const testMultipleJobs = async () => {
             console.log("onStart");
         },
         onJobStart: (job) => {
-            console.log(`start ${job.name}`);
+            console.log(`${job.jobName}: ${job.jobId} - start ${job.name}`);
         },
-        onJobFinish: (job) => {
-            console.log(`finish ${job.name} and cost ${job.duration.toLocaleString()}ms`);
+        onJobFinish: (job, option) => {
+            console.log(`${job.jobName}: ${job.jobId} - finish ${job.name}`, `cost ${job.duration.toLocaleString()}ms`);
+            console.log(option.stats);
         },
         onFinish: (option) => {
             console.log("onFinish");

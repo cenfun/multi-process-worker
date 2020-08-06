@@ -364,6 +364,36 @@ const logCost = (option) => {
 
 };
 
+const updateStats = (option) => {
+    if (!option.stats) {
+        option.stats = {};
+    }
+    const stats = option.stats;
+    
+    const total = option.jobLength;
+    const done = option.jobFinished;
+    const todo = total - done;
+
+    stats.jobTotal = total;
+    stats.jobDone = done;
+    stats.jobTodo = todo;
+    
+    const percent = done / total;
+    stats.percent = percent;
+    
+    const elapsedTime = Date.now() - option.time_start;
+    stats.elapsedTime = elapsedTime;
+    
+    const estimatedTime = Math.round(elapsedTime / done * todo);
+    stats.estimatedTime = estimatedTime;
+
+    //human-readable
+    stats.percentH = `${(percent * 100).toFixed(2)}%`;
+    const max = Math.max(elapsedTime, estimatedTime);
+    stats.elapsedTimeH = Util.DF(elapsedTime, max);
+    stats.estimatedTimeH = Util.DF(estimatedTime, max);
+};
+
 //job finish handler
 const jobFinishHandler = async (option, message) => {
 
@@ -376,25 +406,25 @@ const jobFinishHandler = async (option, message) => {
 
     //check worker
     const workerId = workerJob.workerId;
-    const item = option.workers[workerId];
-    if (!item) {
+    const workerItem = option.workers[workerId];
+    if (!workerItem) {
         output(option, `invalid job workerId ${workerId}`, "red");
         return;
     }
 
-    clearTimeout(item.timeout_job);
-    item.timeout_job = null;
+    clearTimeout(workerItem.timeout_job);
+    workerItem.timeout_job = null;
 
     //check job on master
-    let job = item.workingJob;
-    item.workingJob = null;
+    let job = workerItem.workingJob;
+    workerItem.workingJob = null;
 
     const jobId = job.jobId;
 
     //keep master job id as finished job
-    item.jobIdList.push(jobId);
-    item.time_end = Date.now();
-    item.duration = item.time_end - item.time_start;
+    workerItem.jobIdList.push(jobId);
+    workerItem.time_end = Date.now();
+    workerItem.duration = workerItem.time_end - workerItem.time_start;
 
     //merge worker job back to master job
     job = Object.assign(job, workerJob);
@@ -404,9 +434,11 @@ const jobFinishHandler = async (option, message) => {
     job.time_end = Date.now();
     job.duration = job.time_end - job.time_start;
 
-    await option.onJobFinish(job, option);
-
     option.jobFinished += 1;
+    
+    updateStats(option);
+
+    await option.onJobFinish(job, option);
 
     //has job error
     if (job.code !== 0) {

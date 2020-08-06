@@ -1,4 +1,4 @@
-let workerHandler = async (job) => {
+const workerHandler = (job) => {
 
     return new Promise((resolve) => {
 
