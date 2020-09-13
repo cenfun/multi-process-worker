@@ -1,6 +1,11 @@
-const workerHandler = (job) => {
+const workerHandler = (job, worker) => {
 
     return new Promise((resolve) => {
+
+        worker.send({
+            type: "workerMessage",
+            data: "This is message before job start"
+        });
 
         if (job.name === "error-job") {
             setTimeout(() => {
@@ -9,6 +14,11 @@ const workerHandler = (job) => {
             }, 1000);
             return;
         }
+
+        worker.send({
+            type: "workerMessage",
+            data: "This is message before job resolve"
+        });
 
         setTimeout(() => {
             resolve(0);

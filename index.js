@@ -270,6 +270,12 @@ const workerOnlineTimeoutHandler = (option) => {
 
 //=================================================================================
 
+const workerMessageHandler = (option, message) => {
+    option.onMessage(message.data, option);
+};
+
+//=================================================================================
+
 const getJobById = (option, jobId) => {
     if (jobId) {
         const list = option.jobList;
@@ -498,12 +504,11 @@ class MasterWorker extends EventEmitter {
             }
             if (message.type === "jobStart") {
                 const job = message.data;
-                job.code = await workerHandler(job);
+                job.code = await workerHandler(job, this);
                 this.send({
                     type: "jobFinish",
                     data: job
                 });
-                
             }
         });
     }
@@ -525,6 +530,10 @@ const workerInitEvents = (option, workerId, worker) => {
     worker.on("message", (message) => {
         if (message.type === "workerOnline") {
             workerOnlineHandler(option, workerId, worker);
+            return;
+        }
+        if (message.type === "workerMessage") {
+            workerMessageHandler(option, message);
             return;
         }
         if (message.type === "jobFinish") {
@@ -642,6 +651,7 @@ const getDefaultOption = () => {
 
         //events
         onStart: async (option) => {},
+        onMessage: async (message, option) => {},
         onJobStart: async (job, option) => {},
         onJobFinish: async (job, option) => {},
         onFinish: async (option) => {},

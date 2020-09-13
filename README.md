@@ -3,7 +3,7 @@
 ![multi-process-worker.png](test/multi-process-worker.png)
 
 * Create multiple child processes as workers for jobs
-* Use master process as worker if only one job to do (create child process cost performance)
+* Use master process as worker if only one job to do (low performance if create child process)
 
 ## Install 
 ```sh
@@ -36,6 +36,9 @@ const option = {
     onStart: async (option) => {
         console.log('onStart');
     },
+    onMessage: (message, option) => {
+        console.log(`================ onMessage: ${message}`);
+    },
     onJobStart: (job) => {
         console.log(`${job.jobName}: ${job.jobId} - start ${job.name}`);
     },
@@ -67,7 +70,7 @@ process.on('message', async (message) => {
     }
     if (message.type === "jobStart") {
         var job = message.data;
-        job.code = await workerHandler(job);
+        job.code = await workerHandler(job, process);
         process.send({
             type: "jobFinish",
             data: job
@@ -88,6 +91,7 @@ npm run test
 
 ## Worker Events
 * workerOnline
+* workerMessage
 * jobFinish
 
 ## Debug child process with VSCode
@@ -106,6 +110,9 @@ npm run test
 ```
 
 ## CHANGELOG
+
++ v2.0.5
+  - added workerMessage event
 
 + v2.0.4
   - added stats(percent,elapsedTime,estimatedTime) when job finished

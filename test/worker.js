@@ -12,7 +12,7 @@ process.on("message", async (message) => {
     }
     if (message.type === "jobStart") {
         const job = message.data;
-        job.code = await workerHandler(job);
+        job.code = await workerHandler(job, process);
         process.send({
             type: "jobFinish",
             data: job

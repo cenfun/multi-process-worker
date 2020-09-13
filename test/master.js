@@ -54,6 +54,9 @@ const testMultipleJobs = async () => {
         onStart: (option) => {
             console.log("onStart");
         },
+        onMessage: (message, option) => {
+            console.log(`================ onMessage: ${message}`);
+        },
         onJobStart: (job) => {
             console.log(`${job.jobName}: ${job.jobId} - start ${job.name}`);
         },
@@ -82,6 +85,9 @@ const testSingleJob = async () => {
         }],
         onStart: (option) => {
             console.log("onStart");
+        },
+        onMessage: (message, option) => {
+            console.log(`================ onMessage: ${message}`);
         },
         onJobStart: (job) => {
             console.log(`start ${job.name}`);
