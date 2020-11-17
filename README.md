@@ -111,6 +111,9 @@ npm run test
 
 ## CHANGELOG
 
++ v2.0.6
+  - fixed duration
+
 + v2.0.5
   - added workerMessage event
 
