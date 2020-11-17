@@ -84,23 +84,22 @@ const Util = {
         const hours = Math.floor(s / 60 / 60);
         const minutes = Math.floor((s - (hours * 60 * 60)) / 60);
         const seconds = Math.round(s - (hours * 60 * 60) - (minutes * 60));
-        const time = `${hours}:${Util.zero(minutes)}:${Util.zero(seconds)}`;
-        return time;
+        return `${hours}:${Util.zero(minutes)}:${Util.zero(seconds)}`;
+    },
+
+    //duration time
+    DTF: function(v, maxV) {
+        maxV = maxV || v;
+        if (maxV > 60 * 1000) {
+            return Util.TF(v);
+        }
+        return Util.TF(v, "ms");
     },
 
     //number
     NF: function(v) {
         v = Util.toNum(v);
         return v.toLocaleString();
-    },
-
-    //duration
-    DF: function(v, maxV) {
-        maxV = maxV || v;
-        if (maxV > 60 * 1000) {
-            return Util.TF(v);
-        }
-        return Util.TF(v, "ms");
     }
 
 };
@@ -249,7 +248,7 @@ const workerOnlineHandler = (option, workerId, worker) => {
     if (onlineLength >= option.workerLength) {
         clearTimeout(option.timeout_online);
         const cost = Date.now() - option.time_start;
-        output(option, `all workers are online (${option.workerLength}) and cost ${Util.DF(cost)}`);
+        output(option, `all workers are online (${option.workerLength}) and cost ${Util.DTF(cost)}`);
     }
     startJob(option);
 };
@@ -305,7 +304,7 @@ const logCost = (option) => {
         name: "Duration",
         align: "right",
         formatter: function(v) {
-            return Util.DF(v, maxDuration);
+            return Util.DTF(v, maxDuration);
         }
     }];
 
@@ -396,8 +395,8 @@ const updateStats = (option) => {
     //human-readable
     stats.percentH = `${(percent * 100).toFixed(2)}%`;
     const max = Math.max(elapsedTime, estimatedTime);
-    stats.elapsedTimeH = Util.DF(elapsedTime, max);
-    stats.estimatedTimeH = Util.DF(estimatedTime, max);
+    stats.elapsedTimeH = Util.DTF(elapsedTime, max);
+    stats.estimatedTimeH = Util.DTF(estimatedTime, max);
 };
 
 //job finish handler
@@ -457,7 +456,7 @@ const jobFinishHandler = async (option, message) => {
         if (option.failFast) {
             //finish fast handler
             const cost = Date.now() - option.time_start;
-            output(option, `finish jobs (${option.jobFinished}/${option.jobLength}) and cost ${Util.DF(cost)}`);
+            output(option, `finish jobs (${option.jobFinished}/${option.jobLength}) and cost ${Util.DTF(cost)}`);
 
             output(option, `failFast: ${option.failFast}`);
             output(option, `job ${job.jobId} failed and all worker will be closed ... `);
@@ -474,7 +473,7 @@ const jobFinishHandler = async (option, message) => {
         //finish all handler
 
         const cost = Date.now() - option.time_start;
-        output(option, `finish all jobs (${option.jobLength}) and cost ${Util.DF(cost)}`, "green");
+        output(option, `finish all jobs (${option.jobLength}) and cost ${Util.DTF(cost)}`, "green");
 
         option.code = option.jobFailed;
         close(option);
