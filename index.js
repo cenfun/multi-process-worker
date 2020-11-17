@@ -248,7 +248,7 @@ const workerOnlineHandler = (option, workerId, worker) => {
     const onlineLength = Object.keys(option.workers).length;
     if (onlineLength >= option.workerLength) {
         clearTimeout(option.timeout_online);
-        const cost = (Date.now() - option.time_start).toLocaleString();
+        const cost = Date.now() - option.time_start;
         output(option, `all workers are online (${option.workerLength}) and cost ${Util.DF(cost)}`);
     }
     startJob(option);
@@ -456,7 +456,7 @@ const jobFinishHandler = async (option, message) => {
 
         if (option.failFast) {
             //finish fast handler
-            const cost = (Date.now() - option.time_start).toLocaleString();
+            const cost = Date.now() - option.time_start;
             output(option, `finish jobs (${option.jobFinished}/${option.jobLength}) and cost ${Util.DF(cost)}`);
 
             output(option, `failFast: ${option.failFast}`);
@@ -473,7 +473,7 @@ const jobFinishHandler = async (option, message) => {
     if (option.jobFinished >= option.jobLength) {
         //finish all handler
 
-        const cost = (Date.now() - option.time_start).toLocaleString();
+        const cost = Date.now() - option.time_start;
         output(option, `finish all jobs (${option.jobLength}) and cost ${Util.DF(cost)}`, "green");
 
         option.code = option.jobFailed;
