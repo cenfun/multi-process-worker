@@ -2,18 +2,24 @@
     "name": "multi-process-worker",
     "version": "2.0.6",
     "description": "",
-    "main": "index.js",
+    "main": "lib/index.js",
     "files": [
-        "index.js"
+        "lib"
     ],
-    "dependencies": {
-        "console-grid": "^1.0.16"
+    "scripts": {
+        "test": "node ./test/master.js"
     },
     "repository": {
         "type": "git",
         "url": "https://github.com/cenfun/multi-process-worker.git"
     },
-    "scripts": {
-        "test": "node ./test/master.js"
+    "dependencies": {
+        "console-grid": "^2.0.0",
+        "eight-colors": "^1.0.1"
+    },
+    "devDependencies": {
+        "eslint": "^8.22.0",
+        "eslint-config-plus": "^1.0.3",
+        "eslint-plugin-html": "^7.1.0"
     }
 }

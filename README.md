@@ -7,7 +7,7 @@
 
 ## Install 
 ```sh
-npm install multi-process-worker --save
+npm i multi-process-worker
 ```
 ## Usage
 ```js
@@ -33,29 +33,29 @@ const option = {
     workerOption: {
         property: "value"
     },
-    onStart: async (option) => {
+    onStart: async () => {
         console.log('onStart');
     },
-    onMessage: (message, option) => {
+    onMessage: (message) => {
         console.log(`================ onMessage: ${message}`);
     },
     onJobStart: (job) => {
         console.log(`${job.jobName}: ${job.jobId} - start ${job.name}`);
     },
-    onJobFinish: (job, option) => {
+    onJobFinish: (job, o) => {
         console.log(`${job.jobName}: ${job.jobId} - finish ${job.name}`, `cost ${job.duration.toLocaleString()}ms`);
-        console.log(option.stats);
+        console.log(o.stats);
     },
-    onFinish: async (option) => {
+    onFinish: async (o) => {
         console.log('onFinish');
-        if (option.code !== 0) {
-            console.log(option.name + ': jobs stopped with error: ' + option.code);
+        if (o.code !== 0) {
+            console.log(o.name + ': jobs stopped with error: ' + o.code);
         }
-        process.exit(option.code);
     }
 };
 const code = await MPW(option);
 ```
+see [/test/master.js](/test/master.js)
 
 ```js
 //worker.js for child process
@@ -79,6 +79,7 @@ process.on('message', async (message) => {
     }
 });
 ```
+see [/test/worker.js](/test/worker.js) and [/test/handler.js](/test/handler.js)
 
 ## Test
 ```
@@ -110,6 +111,9 @@ npm run test
 ```
 
 ## CHANGELOG
+
++ v2.0.7
+  - updated deps
 
 + v2.0.6
   - fixed duration
