@@ -1,6 +1,7 @@
 
 # Multi Process Worker
-![multi-process-worker.png](test/multi-process-worker.png)
+![](https://img.shields.io/npm/v/multi-process-worker)
+![](https://img.shields.io/npm/dt/multi-process-worker)
 
 * Create multiple child processes as workers for jobs
 * Use master process as worker if only one job to do (low performance if create child process)
@@ -85,6 +86,8 @@ see [/test/worker.js](/test/worker.js) and [/test/handler.js](/test/handler.js)
 ```
 npm run test
 ```
+
+![](/test/multi-process-worker.png)
 
 ## Master Events 
 * workerStart
